@@ -1,16 +1,66 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
-import { QrCode, Clock, Users, FileText } from 'lucide-react';
+import { QrCode, Clock, Users, FileText, Camera, Keyboard } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { useEmployeeStore } from '../../stores/employeeStore';
+import { BrowserQRCodeReader } from '@zxing/browser';
 
-// Placeholder for QR code reader component
-// In a real app, you would use a proper QR code reader library
+// Enhanced QR code reader component with camera and external reader support
 const QRCodeReader: React.FC<{ onScan: (data: string) => void }> = ({ onScan }) => {
   const [manualInput, setManualInput] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanMode, setScanMode] = useState<'manual' | 'camera' | 'external'>('manual');
+  const [externalInput, setExternalInput] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserQRCodeReader | null>(null);
+  const externalInputRef = useRef<HTMLInputElement>(null);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // External reader focus management
+  useEffect(() => {
+    if (scanMode === 'external' && externalInputRef.current) {
+      externalInputRef.current.focus();
+    }
+  }, [scanMode]);
+  
+  // Handle external reader input (auto-submit on scan)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (externalInput && scanMode === 'external') {
+      timer = setTimeout(() => {
+        onScan(externalInput);
+        setExternalInput('');
+      }, 100); // Short delay to ensure complete scan
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [externalInput, scanMode, onScan]);
+  
+  const startCameraScanning = async () => {
+    try {
+      setIsScanning(true);
+      const codeReader = new BrowserQRCodeReader();
+      codeReaderRef.current = codeReader;
+      
+      const result = await codeReader.decodeOnceFromVideoDevice(undefined, videoRef.current!);
+      onScan(result.getText());
+      stopScanning();
+    } catch (error) {
+      console.error('カメラスキャンエラー:', error);
+      setIsScanning(false);
+    }
+  };
+  
+  const stopScanning = () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
+    }
+    setIsScanning(false);
+  };
+  
+  const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualInput) {
       onScan(manualInput);
@@ -18,25 +68,137 @@ const QRCodeReader: React.FC<{ onScan: (data: string) => void }> = ({ onScan }) 
     }
   };
   
+  const handleExternalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setExternalInput(value);
+    
+    // Auto-detect barcode/QR completion (usually ends with Enter or specific length)
+    if (value.length >= 8) { // Assuming minimum barcode length
+      onScan(value);
+      setExternalInput('');
+    }
+  };
+  
   return (
-    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
-      <div className="text-center mb-4">
-        <QrCode size={48} className="mx-auto text-gray-400" />
-        <p className="mt-2 text-sm text-gray-500">
-          QRコードリーダーが接続されていない場合は、以下のフォームから従業員番号を入力してください。
-        </p>
+    <div className="space-y-4">
+      {/* Scan Mode Selection */}
+      <div className="flex space-x-2 border-b border-gray-200 pb-3">
+        <Button
+          variant={scanMode === 'manual' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setScanMode('manual')}
+        >
+          <Keyboard className="w-4 h-4 mr-1" />
+          手動入力
+        </Button>
+        <Button
+          variant={scanMode === 'camera' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setScanMode('camera')}
+        >
+          <Camera className="w-4 h-4 mr-1" />
+          カメラ
+        </Button>
+        <Button
+          variant={scanMode === 'external' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setScanMode('external')}
+        >
+          <QrCode className="w-4 h-4 mr-1" />
+          外部リーダー
+        </Button>
       </div>
       
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-        <input
-          type="text"
-          value={manualInput}
-          onChange={(e) => setManualInput(e.target.value)}
-          placeholder="従業員番号を入力"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-        />
-        <Button type="submit" variant="primary">打刻</Button>
-      </form>
+      {/* Manual Input Mode */}
+      {scanMode === 'manual' && (
+        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
+          <div className="text-center mb-4">
+            <Keyboard size={48} className="mx-auto text-gray-400" />
+            <p className="mt-2 text-sm text-gray-500">
+              従業員番号またはQRコードの内容を手動で入力してください。
+            </p>
+          </div>
+          
+          <form onSubmit={handleManualSubmit} className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={manualInput}
+              onChange={(e) => setManualInput(e.target.value)}
+              placeholder="従業員番号を入力"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+            />
+            <Button type="submit" variant="primary">打刻</Button>
+          </form>
+        </div>
+      )}
+      
+      {/* Camera Scanning Mode */}
+      {scanMode === 'camera' && (
+        <div className="p-4 border-2 border-solid border-primary-300 rounded-lg">
+          <div className="text-center mb-4">
+            <Camera size={48} className="mx-auto text-primary-500" />
+            <p className="mt-2 text-sm text-gray-600">
+              カメラでQR/バーコードをスキャンしてください。
+            </p>
+          </div>
+          
+          {!isScanning ? (
+            <div className="text-center">
+              <Button onClick={startCameraScanning} variant="primary">
+                <Camera className="w-4 h-4 mr-2" />
+                スキャン開始
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <video
+                ref={videoRef}
+                className="w-full h-48 bg-black rounded-lg"
+                autoPlay
+                playsInline
+              />
+              <div className="text-center">
+                <Button onClick={stopScanning} variant="outline">
+                  スキャン停止
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* External Reader Mode */}
+      {scanMode === 'external' && (
+        <div className="p-4 border-2 border-solid border-success-300 rounded-lg">
+          <div className="text-center mb-4">
+            <QrCode size={48} className="mx-auto text-success-500" />
+            <p className="mt-2 text-sm text-gray-600">
+              外部のQR/バーコードリーダーでスキャンしてください。
+              <br />
+              (USB接続またはBluetooth接続)
+            </p>
+          </div>
+          
+          <div className="relative">
+            <input
+              ref={externalInputRef}
+              type="text"
+              value={externalInput}
+              onChange={handleExternalInput}
+              placeholder="外部リーダーからの入力待機中..."
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-success-500 focus:ring focus:ring-success-200 focus:ring-opacity-50"
+              autoFocus
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          
+          <p className="mt-2 text-xs text-gray-500">
+            外部リーダーがキーボードとして認識されている場合、この入力欄にフォーカスがあることを確認してください。
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -85,8 +247,7 @@ const AttendancePage: React.FC = () => {
   }, [message]);
   
   const handleScan = (data: string) => {
-    // In a real app, this would parse the QR code data
-    // For this demo, we'll assume the data is just the employee number
+    // Parse the scanned data (could be employee number, QR code content, etc.)
     const employeeNumber = data.trim();
     const employee = employees.find(e => e.employeeNumber === employeeNumber);
     
@@ -124,18 +285,29 @@ const AttendancePage: React.FC = () => {
         type: 'success'
       });
     } else {
-      // Already have a record for today, update clock-out time
-      const updatedRecords = [...records];
-      updatedRecords[existingRecordIndex] = {
-        ...updatedRecords[existingRecordIndex],
-        clockOutTime: timeStr
-      };
+      // Already have a record for today
+      const existingRecord = records[existingRecordIndex];
       
-      setRecords(updatedRecords);
-      setMessage({
-        text: `${employee.name}さんが退勤しました。(${timeStr})`,
-        type: 'success'
-      });
+      if (existingRecord.clockOutTime) {
+        // Already clocked out, show message
+        setMessage({
+          text: `${employee.name}さんは既に退勤済みです。`,
+          type: 'error'
+        });
+      } else {
+        // Update clock-out time
+        const updatedRecords = [...records];
+        updatedRecords[existingRecordIndex] = {
+          ...updatedRecords[existingRecordIndex],
+          clockOutTime: timeStr
+        };
+        
+        setRecords(updatedRecords);
+        setMessage({
+          text: `${employee.name}さんが退勤しました。(${timeStr})`,
+          type: 'success'
+        });
+      }
     }
   };
   
@@ -158,7 +330,7 @@ const AttendancePage: React.FC = () => {
             </div>
           </Card>
           
-          <Card title="QRコード読み取り" className="mt-6">
+          <Card title="QR/バーコード読み取り" className="mt-6">
             <QRCodeReader onScan={handleScan} />
             
             {message && (
@@ -181,12 +353,13 @@ const AttendancePage: React.FC = () => {
                     <th>氏名</th>
                     <th>出勤時刻</th>
                     <th>退勤時刻</th>
+                    <th>状態</th>
                   </tr>
                 </thead>
                 <tbody>
                   {records.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-4">
+                      <td colSpan={5} className="text-center py-4">
                         記録がありません。
                       </td>
                     </tr>
@@ -199,6 +372,15 @@ const AttendancePage: React.FC = () => {
                           <td className="font-medium text-gray-900">{record.employeeName}</td>
                           <td>{record.clockInTime}</td>
                           <td>{record.clockOutTime || '-'}</td>
+                          <td>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              record.clockOutTime 
+                                ? 'bg-gray-100 text-gray-800' 
+                                : 'bg-success-100 text-success-800'
+                            }`}>
+                              {record.clockOutTime ? '退勤済み' : '出勤中'}
+                            </span>
+                          </td>
                         </tr>
                       ))
                   )}
