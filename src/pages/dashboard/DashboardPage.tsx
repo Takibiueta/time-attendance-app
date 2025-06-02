@@ -91,7 +91,7 @@ const DashboardPage: React.FC = () => {
             <div>
               <h4 className="font-medium text-gray-700">利用マニュアル</h4>
               <p className="text-sm text-gray-500 mt-1">
-                勤怠・給与管理システムの利用方法については、各機能の説明をご覧ください。
+                出退勤・給与管理システムの利用方法については、各機能の説明をご覧ください。
               </p>
             </div>
             

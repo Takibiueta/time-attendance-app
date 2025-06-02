@@ -156,7 +156,7 @@ const PaySlipPage: React.FC = () => {
         
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <h3 className="text-lg font-medium mb-4 border-b pb-2">勤怠情報</h3>
+            <h3 className="text-lg font-medium mb-4 border-b pb-2">出退勤情報</h3>
             <table className="w-full">
               <tbody>
                 <tr>

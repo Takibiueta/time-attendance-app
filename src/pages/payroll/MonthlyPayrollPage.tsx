@@ -131,7 +131,7 @@ const MonthlyPayrollPage: React.FC = () => {
             <thead>
               <tr>
                 <th rowSpan={2}>氏名</th>
-                <th colSpan={3} className="text-center">勤怠</th>
+                <th colSpan={3} className="text-center">出退勤</th>
                 <th colSpan={4} className="text-center">支給</th>
                 <th colSpan={5} className="text-center">控除</th>
                 <th rowSpan={2}>差引支給額</th>

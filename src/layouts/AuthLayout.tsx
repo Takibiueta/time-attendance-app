@@ -10,7 +10,7 @@ const AuthLayout: React.FC = () => {
           <Logo className="h-12 w-auto" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          勤怠・給与管理システム
+          出退勤・給与管理システム
         </h2>
       </div>
 

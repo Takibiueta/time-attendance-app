@@ -181,7 +181,7 @@ const MainLayout: React.FC = () => {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <div className="text-xl font-semibold text-gray-800">勤怠・給与管理システム</div>
+            <div className="text-xl font-semibold text-gray-800">出退勤・給与管理システム</div>
             <div></div> {/* Placeholder for right side items */}
           </div>
         </header>
@@ -192,7 +192,7 @@ const MainLayout: React.FC = () => {
 
         <footer className="bg-white p-4 border-t border-gray-200">
           <div className="text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} 勤怠・給与管理システム
+            © {new Date().getFullYear()} 出退勤・給与管理システム
           </div>
         </footer>
       </div>
