@@ -17,39 +17,37 @@ import IndividualPayrollPage from './pages/payroll/IndividualPayrollPage';
 import PaySlipPage from './pages/payroll/PaySlipPage';
 import SettingsPage from './pages/settings/SettingsPage';
 
-// Protected route component
+// Protected route component (現在は常に許可)
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const location = useLocation();
+  // ログインチェックを無効化
+  // const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  // const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  // if (!isAuthenticated) {
+  //   return <Navigate to="/login" state={{ from: location }} replace />;
+  // }
 
   return <>{children}</>;
 };
 
 function App() {
-  const checkAuth = useAuthStore(state => state.checkAuth);
+  const { login } = useAuthStore();
   
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    // 自動ログイン（デモユーザー）
+    login('demo', 'demo');
+  }, [login]);
 
   return (
     <Routes>
-      {/* Auth routes */}
+      {/* Auth routes (必要に応じて後で使用) */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
       </Route>
 
-      {/* Protected routes */}
-      <Route element={
-        <ProtectedRoute>
-          <MainLayout />
-        </ProtectedRoute>
-      }>
-        <Route path="/" element={<Navigate to="/dashboard\" replace />} />
+      {/* メインルート（ログイン不要） */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         
         {/* Employee routes */}
@@ -70,7 +68,7 @@ function App() {
       </Route>
 
       {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/\" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
