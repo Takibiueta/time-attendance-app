@@ -122,7 +122,10 @@ const EmployeeFormPage: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(onSubmit)(e);
+      }}>
         <div className="space-y-6">
           <Card title="基本情報">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -355,10 +358,11 @@ const EmployeeFormPage: React.FC = () => {
 
           <div className="flex justify-end">
             <Button
-              type="submit"
+              type="button"
               variant="primary"
               icon={<Save size={18} />}
               isLoading={isLoading}
+              onClick={handleSubmit(onSubmit)}
             >
               保存
             </Button>
