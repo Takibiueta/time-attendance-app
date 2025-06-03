@@ -4,6 +4,7 @@ import { QrCode, Clock, Users, FileText, Camera, Keyboard } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { useEmployeeStore } from '../../stores/employeeStore';
+import { useAttendanceStore } from '../../stores/attendanceStore';
 import { BrowserQRCodeReader } from '@zxing/browser';
 
 // Enhanced QR code reader component with camera and external reader support
@@ -203,22 +204,23 @@ const QRCodeReader: React.FC<{ onScan: (data: string) => void }> = ({ onScan }) 
   );
 };
 
-interface AttendanceRecord {
-  id: string;
-  employeeNumber: string;
-  employeeName: string;
-  clockInTime: string | null;
-  clockOutTime: string | null;
-  date: string;
-}
-
 const AttendancePage: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   
   const messageTimeoutRef = useRef<number | null>(null);
   const employees = useEmployeeStore(state => state.employees);
+  
+  // 出退勤ストアの使用
+  const {
+    addRecord,
+    updateRecord,
+    getRecordsByDate,
+    getTodayRecord
+  } = useAttendanceStore();
+  
+  // 今日の出退勤記録を取得
+  const todayRecords = getRecordsByDate(format(currentTime, 'yyyy-MM-dd'));
   
   // Update current time every second
   useEffect(() => {
@@ -264,30 +266,24 @@ const AttendancePage: React.FC = () => {
     const timeStr = format(now, 'HH:mm:ss');
     
     // Check if there's already a record for this employee today
-    const existingRecordIndex = records.findIndex(
-      r => r.employeeNumber === employeeNumber && r.date === today
-    );
+    const existingRecord = getTodayRecord(employeeNumber);
     
-    if (existingRecordIndex === -1) {
+    if (!existingRecord) {
       // No record for today, create a new clock-in record
-      const newRecord: AttendanceRecord = {
-        id: Date.now().toString(),
+      addRecord({
         employeeNumber,
         employeeName: employee.name,
         clockInTime: timeStr,
         clockOutTime: null,
         date: today
-      };
+      });
       
-      setRecords([newRecord, ...records]);
       setMessage({
         text: `${employee.name}さんが出勤しました。(${timeStr})`,
         type: 'success'
       });
     } else {
       // Already have a record for today
-      const existingRecord = records[existingRecordIndex];
-      
       if (existingRecord.clockOutTime) {
         // Already clocked out, show message
         setMessage({
@@ -296,13 +292,10 @@ const AttendancePage: React.FC = () => {
         });
       } else {
         // Update clock-out time
-        const updatedRecords = [...records];
-        updatedRecords[existingRecordIndex] = {
-          ...updatedRecords[existingRecordIndex],
+        updateRecord(existingRecord.id, {
           clockOutTime: timeStr
-        };
+        });
         
-        setRecords(updatedRecords);
         setMessage({
           text: `${employee.name}さんが退勤しました。(${timeStr})`,
           type: 'success'
@@ -357,32 +350,30 @@ const AttendancePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.length === 0 ? (
+                  {todayRecords.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-4">
                         記録がありません。
                       </td>
                     </tr>
                   ) : (
-                    records
-                      .filter(record => record.date === format(currentTime, 'yyyy-MM-dd'))
-                      .map((record) => (
-                        <tr key={record.id}>
-                          <td>{record.employeeNumber}</td>
-                          <td className="font-medium text-gray-900">{record.employeeName}</td>
-                          <td>{record.clockInTime}</td>
-                          <td>{record.clockOutTime || '-'}</td>
-                          <td>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              record.clockOutTime 
-                                ? 'bg-gray-100 text-gray-800' 
-                                : 'bg-success-100 text-success-800'
-                            }`}>
-                              {record.clockOutTime ? '退勤済み' : '出勤中'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                    todayRecords.map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.employeeNumber}</td>
+                        <td className="font-medium text-gray-900">{record.employeeName}</td>
+                        <td>{record.clockInTime}</td>
+                        <td>{record.clockOutTime || '-'}</td>
+                        <td>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            record.clockOutTime 
+                              ? 'bg-gray-100 text-gray-800' 
+                              : 'bg-success-100 text-success-800'
+                          }`}>
+                            {record.clockOutTime ? '退勤済み' : '出勤中'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
