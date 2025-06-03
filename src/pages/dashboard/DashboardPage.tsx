@@ -20,7 +20,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   onClick,
 }) => {
   return (
-    <Card className="hover:shadow-card-hover cursor-pointer transition-shadow duration-200\" onClick={onClick}>
+    <Card className="hover:shadow-card-hover cursor-pointer transition-shadow duration-200" onClick={onClick}>
       <div className="flex items-start">
         <div className="flex-shrink-0 rounded-md bg-primary-100 p-3 text-primary-600">
           {icon}
