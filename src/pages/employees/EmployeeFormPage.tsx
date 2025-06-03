@@ -95,6 +95,14 @@ const EmployeeFormPage: React.FC = () => {
         return '基本給';
     }
   };
+
+  // 数値入力の共通ハンドラー
+  const handleNumberChange = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    // 空文字または無効な値の場合は0、それ以外は数値に変換
+    const numValue = inputValue === '' ? 0 : parseInt(inputValue, 10);
+    onChange(isNaN(numValue) ? 0 : numValue);
+  };
   
   return (
     <div className="space-y-6">
@@ -164,8 +172,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label={getSalaryLabel()}
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.baseSalary?.message}
                     {...rest}
                   />
@@ -180,8 +188,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="交通費 (月額)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.transportationAllowance?.message}
                     {...rest}
                   />
@@ -196,8 +204,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="扶養家族人数"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.dependents?.message}
                     {...rest}
                   />
@@ -212,8 +220,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="有給休暇残日数"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.paidLeaveRemaining?.message}
                     {...rest}
                   />
@@ -246,8 +254,8 @@ const EmployeeFormPage: React.FC = () => {
                         <Input
                           type="number"
                           label={`手当${index + 1} (金額)`}
-                          value={value.toString()}
-                          onChange={e => onChange(parseInt(e.target.value) || 0)}
+                          value={value || ''}
+                          onChange={handleNumberChange(onChange)}
                           {...rest}
                         />
                       )}
@@ -268,8 +276,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="健康保険料 (月額)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.healthInsurance?.message}
                     helperText={salaryType === SalaryType.Hourly ? "※時給制の場合は対象外" : ""}
                     {...rest}
@@ -285,8 +293,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="介護保険料 (月額)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.nursingInsurance?.message}
                     helperText={salaryType === SalaryType.Hourly ? "※時給制の場合は対象外" : ""}
                     {...rest}
@@ -302,8 +310,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="厚生年金保険料 (月額)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.pensionInsurance?.message}
                     helperText={salaryType === SalaryType.Hourly ? "※時給制の場合は対象外" : ""}
                     {...rest}
@@ -319,8 +327,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="市民税 (6月分)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.residentTax?.june?.message}
                     {...rest}
                   />
@@ -335,8 +343,8 @@ const EmployeeFormPage: React.FC = () => {
                   <Input
                     type="number"
                     label="市民税 (その他の月分)"
-                    value={value.toString()}
-                    onChange={e => onChange(parseInt(e.target.value) || 0)}
+                    value={value || ''}
+                    onChange={handleNumberChange(onChange)}
                     error={errors.residentTax?.other?.message}
                     {...rest}
                   />
