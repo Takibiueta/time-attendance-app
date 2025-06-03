@@ -20,20 +20,22 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   onClick,
 }) => {
   return (
-    <Card className="hover:shadow-card-hover cursor-pointer transition-shadow duration-200" onClick={onClick}>
-      <div className="flex items-start">
-        <div className="flex-shrink-0 rounded-md bg-primary-100 p-3 text-primary-600">
-          {icon}
+    <div onClick={onClick} className="cursor-pointer">
+      <Card className="hover:shadow-card-hover transition-shadow duration-200">
+        <div className="flex items-start">
+          <div className="flex-shrink-0 rounded-md bg-primary-100 p-3 text-primary-600">
+            {icon}
+          </div>
+          <div className="ml-5">
+            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            {count !== undefined && (
+              <p className="mt-3 text-2xl font-semibold text-primary-600">{count}</p>
+            )}
+          </div>
         </div>
-        <div className="ml-5">
-          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
-          {count !== undefined && (
-            <p className="mt-3 text-2xl font-semibold text-primary-600">{count}</p>
-          )}
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
